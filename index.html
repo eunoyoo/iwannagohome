@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의밥 - 9월 학교급식 점심 식단표</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mint: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans" x-data="mealApp()" x-init="initApp()">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-mint-500 p-2.5 rounded-2xl text-white shadow-md shadow-mint-500/20">
+                    <i data-lucide="utensils" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-bold text-slate-800 tracking-tight">오늘의밥</h1>
+                        <span class="bg-mint-100 text-mint-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">언주중학교 점심식단</span>
+                    </div>
+                    <p class="text-xs text-slate-500">2026년 9월학교급식 영양소식지</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- 사용자 알레르기 설정 버튼 -->
+                <button @click="openAllergyModal()" class="flex items-center gap-2 bg-white border border-slate-300 hover:border-mint-500 text-slate-700 hover:text-mint-600 px-3.5 py-2 rounded-xl text-sm font-medium transition shadow-sm relative">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500"></i>
+                    <span>나의 알레르기 설정</span>
+                    <template x-if="userAllergies.length > 0">
+                        <span class="bg-amber-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold" x-text="userAllergies.length"></span>
+                    </template>
+                </button>
+
+                <!-- 관리자 버튼 -->
+                <button @click="openAdminModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition" title="관리자 식단 수정">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+
+        <!-- Top Status Bar -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-100 p-2 rounded-xl text-slate-600">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">2026년 9월</h2>
+                    <p class="text-xs text-slate-500">날짜를 클릭하시면 상세 영양성분 및 내 알레르기 주의를 확인하실 수 있습니다.</p>
+                </div>
+            </div>
+
+            <!-- Allergen Filter Status -->
+            <div class="text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex items-center gap-2 w-full md:w-auto">
+                <span class="font-semibold text-slate-500">설정된 알레르기:</span>
+                <template x-if="userAllergies.length === 0">
+                    <span class="text-slate-400">선택된 항목 없음</span>
+                </template>
+                <template x-if="userAllergies.length > 0">
+                    <div class="flex flex-wrap gap-1 max-w-xs">
+                        <template x-for="id in userAllergies" :key="id">
+                            <span class="bg-amber-100 text-amber-800 text-[11px] px-1.5 py-0.5 rounded font-medium" x-text="allergenList.find(a=>a.id===id)?.name"></span>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Calendar Grid Container -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <!-- Day of Week Header -->
+            <div class="grid grid-cols-5 bg-slate-50 border-b border-slate-200 text-center font-semibold text-xs text-slate-500 py-2.5">
+                <div>월요일</div>
+                <div>화요일</div>
+                <div>수요일</div>
+                <div>목요일</div>
+                <div>금요일</div>
+            </div>
+
+            <!-- Calendar Days -->
+            <div class="grid grid-cols-5 auto-rows-fr divide-x divide-y divide-slate-100 bg-slate-100/50">
+                <template x-for="(day, index) in calendarDays" :key="index">
+                    <div 
+                        @click="day.date ? openDetailModal(day) : null"
+                        :class="{
+                            'bg-white hover:bg-mint-50/40 cursor-pointer': day.date && !day.isHoliday,
+                            'bg-slate-50/60 cursor-default': !day.date || day.isHoliday,
+                            'ring-2 ring-mint-500 ring-inset': day.date === '9/21'
+                        }"
+                        class="min-h-[145px] p-2 flex flex-col justify-between transition-colors relative group"
+                    >
+                        <!-- Top Date Row -->
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-xs font-bold px-1.5 py-0.5 rounded-md" 
+                                  :class="day.isHoliday ? 'text-red-500 bg-red-50' : 'text-slate-700 bg-slate-100'" 
+                                  x-text="day.dateLabel || ''"></span>
+                            
+                            <!-- Danger Indicator Icon if user allergies present in lunch -->
+                            <template x-if="day.hasUserAllergen">
+                                <span class="flex h-2 w-2 relative" title="알레르기 주의 음식 포함">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                </span>
+                            </template>
+                        </div>
+
+                        <!-- Content Area -->
+                        <div class="flex-1 overflow-hidden flex flex-col justify-between">
+                            <!-- Menu List Preview -->
+                            <template x-if="day.menu && day.menu.length > 0">
+                                <ul class="text-[11px] text-slate-600 space-y-0.5 leading-tight">
+                                    <template x-for="(item, i) in day.menu.slice(0, 4)" :key="i">
+                                        <li class="truncate flex items-center justify-between" :class="containsUserAllergen(item.allergies) ? 'text-red-600 font-semibold' : ''">
+                                            <span x-text="item.name" class="truncate"></span>
+                                            <template x-if="containsUserAllergen(item.allergies)">
+                                                <span class="text-[9px] bg-red-100 text-red-600 px-1 rounded ml-1 shrink-0">주의</span>
+                                            </template>
+                                        </li>
+                                    </template>
+                                    <template x-if="day.menu.length > 4">
+                                        <li class="text-[10px] text-slate-400 font-medium">+<span x-text="day.menu.length - 4"></span>개 더보기</li>
+                                    </template>
+                                </ul>
+                            </template>
+
+                            <!-- Holiday / Event Display -->
+                            <template x-if="day.isHoliday">
+                                <div class="flex-1 flex flex-col items-center justify-center text-center p-2">
+                                    <span class="text-xs font-bold text-slate-400" x-text="day.holidayTitle"></span>
+                                    <template x-if="day.holidayNote">
+                                        <span class="text-[10px] text-slate-400 mt-0.5" x-text="day.holidayNote"></span>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Nutrition Brief Footnote -->
+                            <template x-if="day.nutrition">
+                                <div class="mt-1 pt-1 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                                    <span><span class="font-semibold text-slate-600" x-text="day.nutrition.kcal"></span> kcal</span>
+                                    <span x-text="day.nutrition.protein + 'g'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Legend Footer -->
+        <div class="mt-4 p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-500 space-y-1">
+            <p class="font-semibold text-slate-700">※ 참고사항</p>
+            <p>• 식단 밑의 숫자는 [열량(kcal) / 단백질(g) / 칼슘(mg) / 철분(mg)] 순서입니다.</p>
+            <p>• 식단표를 참고하시어 학생 체질에 맞게 먹을 수 있도록 가정 및 학급에서 지도해주시기 바랍니다.</p>
+            <p>• 식단은 식자재 수급 상황 및 학사일정에 의해 변동될 수 있습니다.</p>
+        </div>
+    </main>
+
+    <!-- Modal 1: Date Detail Modal -->
+    <div x-show="isDetailModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isDetailModalOpen" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="closeDetailModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="isDetailModalOpen" x-transition.scale.origin.bottom class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <template x-if="selectedDay">
+                    <div>
+                        <!-- Header -->
+                        <div class="bg-gradient-to-r from-mint-500 to-mint-600 p-5 text-white flex justify-between items-start">
+                            <div>
+                                <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium">9월 점심 식단</span>
+                                <h3 class="text-2xl font-bold mt-1" x-text="selectedDay.dateLabel + ' 식단 상세'"></h3>
+                            </div>
+                            <button @click="closeDetailModal()" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <div class="p-5 space-y-5">
+                            <!-- Safe / Warning Alert Banner -->
+                            <template x-if="selectedDay.hasUserAllergen">
+                                <div class="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start gap-3">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <h4 class="text-sm font-bold text-red-800">알레르기 주의 메뉴가 있습니다!</h4>
+                                        <p class="text-xs text-red-600 mt-0.5">설정하신 알레르기 유발 성분이 포함된 음식입니다. 식사 시 주의해 주세요.</p>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!selectedDay.hasUserAllergen && selectedDay.menu && selectedDay.menu.length > 0">
+                                <div class="bg-mint-50 border border-mint-200 rounded-xl p-3.5 flex items-start gap-3">
+                                    <i data-lucide="check-circle" class="w-5 h-5 text-mint-600 shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <h4 class="text-sm font-bold text-mint-800">알레르기 위험 없이 안전합니다!</h4>
+                                        <p class="text-xs text-mint-600 mt-0.5">선택하신 알레르기 항목이 포함되어 있지 않습니다.</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Menu List -->
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">오늘의 식단 메뉴</h4>
+                                <div class="bg-slate-50 rounded-xl p-3 divide-y divide-slate-200/60 border border-slate-100">
+                                    <template x-for="(item, idx) in selectedDay.menu" :key="idx">
+                                        <div class="py-2.5 first:pt-0 last:pb-0 flex justify-between items-center gap-2">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-mint-500 shrink-0"></span>
+                                                <span class="text-sm font-semibold text-slate-800 truncate" x-text="item.name"></span>
+                                            </div>
+                                            
+                                            <div class="flex items-center gap-1 shrink-0">
+                                                <!-- Warning Badge -->
+                                                <template x-if="containsUserAllergen(item.allergies)">
+                                                    <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                                                        <i data-lucide="alert-circle" class="w-3 h-3"></i> 주의
+                                                    </span>
+                                                </template>
+
+                                                <!-- Allergen Tag Code Badges -->
+                                                <div class="flex flex-wrap gap-0.5">
+                                                    <template x-for="code in item.allergies" :key="code">
+                                                        <span 
+                                                            :class="userAllergies.includes(code) ? 'bg-red-100 text-red-700 font-bold border border-red-300' : 'bg-slate-200/70 text-slate-600'"
+                                                            class="text-[10px] px-1.5 py-0.5 rounded font-mono"
+                                                            :title="allergenList.find(a=>a.id===code)?.name"
+                                                            x-text="code"></span>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Nutrition Details Card -->
+                            <template x-if="selectedDay.nutrition">
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">영양성분 정보</h4>
+                                    <div class="grid grid-cols-4 gap-2 text-center">
+                                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                            <span class="text-[11px] text-slate-400 block mb-0.5">열량</span>
+                                            <span class="text-sm font-bold text-slate-800" x-text="selectedDay.nutrition.kcal + ' kcal'"></span>
+                                        </div>
+                                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                            <span class="text-[11px] text-slate-400 block mb-0.5">단백질</span>
+                                            <span class="text-sm font-bold text-slate-800" x-text="selectedDay.nutrition.protein + ' g'"></span>
+                                        </div>
+                                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                            <span class="text-[11px] text-slate-400 block mb-0.5">칼슘</span>
+                                            <span class="text-sm font-bold text-slate-800" x-text="selectedDay.nutrition.calcium + ' mg'"></span>
+                                        </div>
+                                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                            <span class="text-[11px] text-slate-400 block mb-0.5">철분</span>
+                                            <span class="text-sm font-bold text-slate-800" x-text="selectedDay.nutrition.iron + ' mg'"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Modal Footer -->
+                        <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex justify-end">
+                            <button @click="closeDetailModal()" class="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium px-5 py-2 rounded-xl transition">
+                                닫기
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: User Allergy Selection Modal -->
+    <div x-show="isAllergyModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isAllergyModalOpen" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closeAllergyModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div x-show="isAllergyModalOpen" x-transition.scale.origin.bottom class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-amber-500"></i>
+                        <h3 class="text-lg font-bold text-slate-800">알레르기 유발 물질 설정</h3>
+                    </div>
+                    <button @click="closeAllergyModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="p-5">
+                    <p class="text-xs text-slate-500 mb-4">본인에게 해당되는 알레르기 성분을 선택하세요. 식단표에서 자동으로 위험 알림을 표시합니다.</p>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                        <template x-for="allergen in allergenList" :key="allergen.id">
+                            <label class="flex items-center p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition select-none"
+                                   :class="tempAllergies.includes(allergen.id) ? 'bg-amber-50/70 border-amber-300 ring-1 ring-amber-300' : ''">
+                                <input type="checkbox" 
+                                       :value="allergen.id" 
+                                       x-model="tempAllergies"
+                                       class="w-4 h-4 text-amber-500 rounded border-slate-300 focus:ring-amber-400">
+                                <span class="ml-2.5 text-xs font-medium text-slate-700">
+                                    <span class="text-slate-400 font-mono text-[10px]" x-text="allergen.id + '.'"></span>
+                                    <span x-text="allergen.name"></span>
+                                </span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex justify-between items-center">
+                    <button @click="tempAllergies = []" class="text-xs text-slate-400 hover:text-slate-600 underline">전체 해제</button>
+                    <div class="flex gap-2">
+                        <button @click="closeAllergyModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition">취소</button>
+                        <button @click="saveAllergies()" class="bg-mint-600 hover:bg-mint-700 text-white text-sm font-medium px-5 py-2 rounded-xl transition shadow-sm">저장하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Admin Meal Input Modal -->
+    <div x-show="isAdminModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isAdminModalOpen" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closeAdminModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div x-show="isAdminModalOpen" x-transition.scale.origin.bottom class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="settings" class="w-5 h-5 text-slate-600"></i>
+                        <h3 class="text-lg font-bold text-slate-800">관리자 식단 수정</h3>
+                    </div>
+                    <button @click="closeAdminModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="p-5 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">수정할 날짜 선택</label>
+                        <select x-model="adminSelectedDate" @change="loadAdminData()" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-mint-500 focus:border-mint-500">
+                            <template x-for="day in calendarDays.filter(d=>d.date)" :key="day.date">
+                                <option :value="day.date" x-text="day.dateLabel"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">메뉴 목록 (음식명 및 알레르기 번호)</label>
+                        <p class="text-[11px] text-slate-400 mb-2">알레르기는 번호를 쉼표로 구문하여 입력 예: 쇠고기국(5.6.16)</p>
+                        <textarea x-model="adminMenuText" rows="6" class="w-full border border-slate-300 rounded-xl p-3 text-sm font-mono focus:ring-mint-500 focus:border-mint-500" placeholder="현미찹쌀밥&#10;맑은미역국(5.6)&#10;버섯소불고기(5.6.13.16.18)"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">열량(kcal)</label>
+                            <input type="number" step="0.1" x-model="adminNutrition.kcal" class="w-full border border-slate-300 rounded-xl p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">단백질(g)</label>
+                            <input type="number" step="0.1" x-model="adminNutrition.protein" class="w-full border border-slate-300 rounded-xl p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">칼슘(mg)</label>
+                            <input type="number" step="0.1" x-model="adminNutrition.calcium" class="w-full border border-slate-300 rounded-xl p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 mb-1">철분(mg)</label>
+                            <input type="number" step="0.1" x-model="adminNutrition.iron" class="w-full border border-slate-300 rounded-xl p-2 text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex justify-between items-center">
+                    <button @click="resetToDefaultData()" class="text-xs text-red-500 hover:text-red-700 underline">초기 식단으로 복원</button>
+                    <div class="flex gap-2">
+                        <button @click="closeAdminModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition">취소</button>
+                        <button @click="saveAdminData()" class="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium px-5 py-2 rounded-xl transition">저장하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script>
+        // 식약처 기준 19가지 알레르기 유발 물질 목록
+        const ALLERGEN_LIST = [
+            { id: 1, name: '난류(계란)' },
+            { id: 2, name: '우유' },
+            { id: 3, name: '메밀' },
+            { id: 4, name: '땅콩' },
+            { id: 5, name: '대두(콩)' },
+            { id: 6, name: '밀' },
+            { id: 7, name: '고등어' },
+            { id: 8, name: '게' },
+            { id: 9, name: '새우' },
+            { id: 10, name: '돼지고기' },
+            { id: 11, name: '복숭아' },
+            { id: 12, name: '토마토' },
+            { id: 13, name: '아황산류' },
+            { id: 14, name: '호두' },
+            { id: 15, name: '닭고기' },
+            { id: 16, name: '쇠고기' },
+            { id: 17, name: '오징어' },
+            { id: 18, name: '조개류' },
+            { id: 19, name: '잣' }
+        ];
+
+        // 2026년 9월 언주중학교 가정통신문 급식 데이터 원본
+        const DEFAULT_MEALS_DATA = {
+            "9/1": {
+                menu: [
+                    { name: "현미찹쌀밥", allergies: [] },
+                    { name: "맑은미역국", allergies: [5, 6] },
+                    { name: "버섯소불고기", allergies: [5, 6, 13, 16, 18] },
+                    { name: "한식잡채", allergies: [1, 5, 6, 13] },
+                    { name: "배추겉절이", allergies: [9] },
+                    { name: "파베생초코", allergies: [2, 5] }
+                ],
+                nutrition: { kcal: 569.5, protein: 29.8, calcium: 239.3, iron: 4.9 }
+            },
+            "9/2": {
+                menu: [
+                    { name: "돈코츠라멘", allergies: [1, 5, 6, 7, 10, 16] },
+                    { name: "후리카게밥", allergies: [5, 6] },
+                    { name: "새우튀김/칠리마요D", allergies: [1, 2, 5, 6, 9, 12] },
+                    { name: "도라지오이무침", allergies: [5, 6, 13] },
+                    { name: "깍두기", allergies: [9] },
+                    { name: "유기농바닐라아이스크림", allergies: [1, 2] }
+                ],
+                nutrition: { kcal: 1117.0, protein: 34.7, calcium: 357.18, iron: 2.8 }
+            },
+            "9/3": {
+                menu: [
+                    { name: "기장밥", allergies: [] },
+                    { name: "닭곰탕", allergies: [15] },
+                    { name: "삼치데리야끼구이", allergies: [5, 6, 13] },
+                    { name: "에그랑땡/케찹", allergies: [1, 2, 5, 6, 10, 12, 15, 16, 18] },
+                    { name: "총각김치", allergies: [9] },
+                    { name: "샤인머스켓", allergies: [] }
+                ],
+                nutrition: { kcal: 685.2, protein: 39.0, calcium: 151.1, iron: 4.0 }
+            },
+            "9/4": {
+                menu: [
+                    { name: "완두콩밥/짜장소스", allergies: [1, 5, 6, 10, 13] },
+                    { name: "해물짬뽕국", allergies: [5, 6, 8, 9, 10, 13, 17, 18] },
+                    { name: "동물복지 깐풍기", allergies: [1, 5, 6, 10, 15, 18] },
+                    { name: "버터찹쌀김부각", allergies: [1, 2, 5, 6] },
+                    { name: "깍두기", allergies: [9] },
+                    { name: "골드키위", allergies: [] }
+                ],
+                nutrition: { kcal: 642.2, protein: 29.4, calcium: 155.5, iron: 17.2 }
+            },
+            "9/7": {
+                menu: [
+                    { name: "혼합잡곡밥", allergies: [5] },
+                    { name: "호박고추장찌개", allergies: [5, 6] },
+                    { name: "수육보쌈", allergies: [5, 6, 10, 13] },
+                    { name: "비빔막국수", allergies: [3, 5, 6, 9, 13] },
+                    { name: "보쌈김치", allergies: [9] },
+                    { name: "조각배", allergies: [] }
+                ],
+                nutrition: { kcal: 750.6, protein: 35.4, calcium: 138.9, iron: 3.4 }
+            },
+            "9/8": {
+                menu: [
+                    { name: "기장밥", allergies: [] },
+                    { name: "쇠고기우거지국", allergies: [5, 6, 16] },
+                    { name: "춘천닭갈비", allergies: [5, 6, 13, 15] },
+                    { name: "찹쌀콩멸치볶음", allergies: [5, 13] },
+                    { name: "열무김치", allergies: [9] },
+                    { name: "노티드우유생크림도넛", allergies: [1, 2, 5, 6] }
+                ],
+                nutrition: { kcal: 762.0, protein: 33.6, calcium: 177.9, iron: 2.7 }
+            },
+            "9/9": {
+                menu: [
+                    { name: "날치알김치볶음밥", allergies: [5, 6, 9, 10, 13, 18] },
+                    { name: "미니우동국", allergies: [1, 5, 6, 9, 13] },
+                    { name: "혜화동치즈돈까스/소스", allergies: [1, 2, 5, 6, 10, 12, 16, 18] },
+                    { name: "양배추샐러드/참깨D", allergies: [1, 5, 6] },
+                    { name: "단무지무침", allergies: [13] },
+                    { name: "딸기우유", allergies: [2] }
+                ],
+                nutrition: { kcal: 736.4, protein: 31.0, calcium: 285.4, iron: 2.2 }
+            },
+            "9/10": {
+                menu: [
+                    { name: "귀리밥", allergies: [] },
+                    { name: "맑은조랭이떡국", allergies: [1, 5, 6] },
+                    { name: "주꾸미순대볶음/무쌈", allergies: [2, 5, 6, 10, 13, 16] },
+                    { name: "삼색계란찜", allergies: [1, 2] },
+                    { name: "오이김치", allergies: [9] },
+                    { name: "사과", allergies: [] }
+                ],
+                nutrition: { kcal: 552.3, protein: 18.9, calcium: 135.0, iron: 3.9 }
+            },
+            "9/11": {
+                menu: [
+                    { name: "현미찹쌀밥", allergies: [] },
+                    { name: "콩가루배추국", allergies: [5, 6, 9] },
+                    { name: "제육불고기", allergies: [5, 6, 10, 13] },
+                    { name: "감자야채볶음", allergies: [] },
+                    { name: "양배추쌈/저염두부쌈장", allergies: [5, 6, 13] },
+                    { name: "총각김치", allergies: [9] },
+                    { name: "아이스블루베리&치즈큐브", allergies: [1, 2, 5, 6] }
+                ],
+                nutrition: { kcal: 529.8, protein: 31.2, calcium: 247.6, iron: 2.9 }
+            },
+            "9/14": {
+                menu: [
+                    { name: "혼합잡곡밥", allergies: [5] },
+                    { name: "소고기무국", allergies: [5, 6, 16] },
+                    { name: "분모자로제찜닭", allergies: [1, 2, 5, 6, 10, 12, 13, 15, 16] },
+                    { name: "애호박새우살볶음", allergies: [9, 13] },
+                    { name: "동치미", allergies: [9] },
+                    { name: "캠벨포도", allergies: [] }
+                ],
+                nutrition: { kcal: 681.9, protein: 30.7, calcium: 103.1, iron: 2.3 }
+            },
+            "9/15": {
+                menu: [
+                    { name: "찰보리밥", allergies: [] },
+                    { name: "돈육김치찌개", allergies: [5, 9, 10] },
+                    { name: "오삼불고기", allergies: [5, 6, 10, 13, 17] },
+                    { name: "고구마순들깨볶음", allergies: [] },
+                    { name: "상추파절이", allergies: [5, 6, 13] },
+                    { name: "총각김치", allergies: [9] },
+                    { name: "우리밀하트파이", allergies: [2, 6] }
+                ],
+                nutrition: { kcal: 523.8, protein: 21.4, calcium: 124.2, iron: 2.1 }
+            },
+            "9/16": {
+                menu: [
+                    { name: "두끼st국물떡볶이", allergies: [2, 5, 6, 16] },
+                    { name: "우동장국", allergies: [1, 2, 5, 6, 9, 13] },
+                    { name: "참치마요덮밥(미니)", allergies: [1, 5, 13] },
+                    { name: "당면만두/김말이튀김", allergies: [2, 5, 6, 10, 12, 15, 16] },
+                    { name: "단무지", allergies: [] },
+                    { name: "쿨피스(복숭아맛)", allergies: [11, 13] }
+                ],
+                nutrition: { kcal: 843.5, protein: 25.7, calcium: 167.9, iron: 8.2 }
+            },
+            "9/17": {
+                menu: [
+                    { name: "현미찹쌀밥/돌자반", allergies: [] },
+                    { name: "강릉초당순두부백탕", allergies: [5, 6, 9] },
+                    { name: "돼지고기김치찜", allergies: [5, 6, 9, 10, 13] },
+                    { name: "콘치즈구이", allergies: [1, 2, 5, 13] },
+                    { name: "오이소박이", allergies: [9] },
+                    { name: "파인애플", allergies: [] }
+                ],
+                nutrition: { kcal: 590.4, protein: 35.8, calcium: 305.7, iron: 5.1 }
+            },
+            "9/18": {
+                menu: [
+                    { name: "잔치국수", allergies: [1, 5, 6] },
+                    { name: "김가루밥(미니)", allergies: [5, 6, 13, 16] },
+                    { name: "북채후라이드치킨", allergies: [2, 4, 5, 6, 12, 15, 16, 18] },
+                    { name: "오이고추된장무침", allergies: [5, 6] },
+                    { name: "배추겉절이", allergies: [9] },
+                    { name: "토핑요거트", allergies: [2, 6] }
+                ],
+                nutrition: { kcal: 717.9, protein: 30.8, calcium: 245.1, iron: 2.4 }
+            },
+            "9/21": {
+                menu: [
+                    { name: "마파두부덮밥", allergies: [5, 6, 10, 13, 18] },
+                    { name: "맑은콩나물국", allergies: [5] },
+                    { name: "닭장작오븐구이", allergies: [2, 5, 6, 12, 13, 15] },
+                    { name: "진미채조림", allergies: [1, 5, 6, 13, 17, 18] },
+                    { name: "백김치", allergies: [9] },
+                    { name: "조각멜론", allergies: [] }
+                ],
+                nutrition: { kcal: 859.3, protein: 56.6, calcium: 147.8, iron: 3.4 }
+            },
+            "9/22": {
+                menu: [
+                    { name: "현미찹쌀밥", allergies: [] },
+                    { name: "소고기당면국", allergies: [5, 6, 16] },
+                    { name: "오리고추장불고기", allergies: [5, 6, 13] },
+                    { name: "돈육전/감자전", allergies: [1, 2, 5, 6, 10, 16] },
+                    { name: "배추김치", allergies: [9] },
+                    { name: "보름달송편", allergies: [] }
+                ],
+                nutrition: { kcal: 762.0, protein: 33.6, calcium: 177.9, iron: 2.7 }
+            },
+            "9/23": {
+                menu: [
+                    { name: "로제스파게티", allergies: [1, 2, 5, 6, 10, 12, 15, 16, 18] },
+                    { name: "양송이크림스프", allergies: [2, 5, 6, 13, 16] },
+                    { name: "돈마호크/옥수수콘립", allergies: [1, 5, 6, 10, 15, 16] },
+                    { name: "시저샐러드", allergies: [1, 2, 5, 6, 12, 16, 18] },
+                    { name: "오이피클", allergies: [] },
+                    { name: "사과맛요구르트", allergies: [2] }
+                ],
+                nutrition: { kcal: 690.7, protein: 36.8, calcium: 199.0, iron: 2.1 }
+            },
+            "9/28": {
+                menu: [
+                    { name: "백미밥", allergies: [] },
+                    { name: "한우소머리국밥", allergies: [5, 6, 16] },
+                    { name: "소떡소떡꼬치", allergies: [1, 2, 5, 6, 10, 12, 15] },
+                    { name: "도토리묵야채무침", allergies: [13] },
+                    { name: "석박지", allergies: [9] },
+                    { name: "크림치즈바움쿠헨", allergies: [1, 2, 5, 6, 13] }
+                ],
+                nutrition: { kcal: 870.9, protein: 28.4, calcium: 67.1, iron: 1.1 }
+            },
+            "9/29": {
+                menu: [
+                    { name: "옛날도시락밥", allergies: [2, 5, 6, 9, 10, 13, 16] },
+                    { name: "된장찌개", allergies: [5, 6] },
+                    { name: "고구마치즈닭갈비그라탕", allergies: [1, 2, 5, 6, 15, 16, 18] },
+                    { name: "계란후라이", allergies: [1] },
+                    { name: "동치미", allergies: [9] },
+                    { name: "쌀과자", allergies: [5] }
+                ],
+                nutrition: { kcal: 1035.3, protein: 63.2, calcium: 307.6, iron: 5.5 }
+            },
+            "9/30": {
+                menu: [
+                    { name: "양지쌀국수", allergies: [2, 5, 6, 15, 16, 18] },
+                    { name: "반미샌드위치", allergies: [1, 2, 5, 6, 10, 12, 13] },
+                    { name: "고구마/스프링롤(칠리D)", allergies: [5, 6, 8, 9] },
+                    { name: "하트단무지", allergies: [] },
+                    { name: "흑당버블밀크티", allergies: [2] }
+                ],
+                nutrition: { kcal: 921.6, protein: 26.2, calcium: 200.3, iron: 3.8 }
+            }
+        };
+
+        function mealApp() {
+            return {
+                allergenList: ALLERGEN_LIST,
+                mealsData: {},
+                userAllergies: [],
+                tempAllergies: [],
+                calendarDays: [],
+
+                // Modal States
+                isDetailModalOpen: false,
+                isAllergyModalOpen: false,
+                isAdminModalOpen: false,
+
+                selectedDay: null,
+                adminSelectedDate: "9/1",
+                adminMenuText: "",
+                adminNutrition: { kcal: 0, protein: 0, calcium: 0, iron: 0 },
+
+                initApp() {
+                    // Load saved allergies
+                    const savedAllergies = localStorage.getItem('todayMeal_userAllergies');
+                    if (savedAllergies) {
+                        try { this.userAllergies = JSON.parse(savedAllergies); } catch(e){}
+                    }
+
+                    // Load saved meal data or fallback to defaults
+                    const savedMeals = localStorage.getItem('todayMeal_mealsData_202609');
+                    if (savedMeals) {
+                        try { this.mealsData = JSON.parse(savedMeals); } catch(e) { this.mealsData = DEFAULT_MEALS_DATA; }
+                    } else {
+                        this.mealsData = DEFAULT_MEALS_DATA;
+                    }
+
+                    this.buildCalendar();
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                buildCalendar() {
+                    // 2026년 9월 달력 빌드 (주 5일 평일 기준 그리드)
+                    // 9월 1일은 화요일
+                    const rawDays = [
+                        // Week 1
+                        { date: "9/1", dateLabel: "9/1" },
+                        { date: "9/2", dateLabel: "9/2" },
+                        { date: "9/3", dateLabel: "9/3" },
+                        { date: "9/4", dateLabel: "9/4" },
+
+                        // Week 2
+                        { date: "9/7", dateLabel: "9/7" },
+                        { date: "9/8", dateLabel: "9/8" },
+                        { date: "9/9", dateLabel: "9/9" },
+                        { date: "9/10", dateLabel: "9/10 동아리" },
+                        { date: "9/11", dateLabel: "9/11" },
+
+                        // Week 3
+                        { date: "9/14", dateLabel: "9/14" },
+                        { date: "9/15", dateLabel: "9/15" },
+                        { date: "9/16", dateLabel: "9/16" },
+                        { date: "9/17", dateLabel: "9/17" },
+                        { date: "9/18", dateLabel: "9/18" },
+
+                        // Week 4
+                        { date: "9/21", dateLabel: "9/21" },
+                        { date: "9/22", dateLabel: "9/22 추석맞이" },
+                        { date: "9/23", dateLabel: "9/23" },
+                        { date: "9/24", dateLabel: "9/24", isHoliday: true, holidayTitle: "추석 연휴", holidayNote: "" },
+                        { date: "9/25", dateLabel: "9/25 추석", isHoliday: true, holidayTitle: "추석 (보름달)", holidayNote: "풍성한 한가위 되세요" },
+
+                        // Week 5
+                        { date: "9/28", dateLabel: "9/28 시험응원" },
+                        { date: "9/29", dateLabel: "9/29 3학년만" },
+                        { date: "9/30", dateLabel: "9/30 1,3학년만" },
+                    ];
+
+                    // 9/1 화요일 시작이므로 월요일 칸 빈 박스 처리
+                    const calendar = [
+                        { date: null, dateLabel: "" }, // 8/31 월요일 공간
+                    ];
+
+                    rawDays.forEach(item => {
+                        const meal = this.mealsData[item.date] || null;
+                        const hasUserAllergen = meal ? meal.menu.some(m => this.containsUserAllergen(m.allergies)) : false;
+
+                        calendar.push({
+                            ...item,
+                            menu: meal ? meal.menu : [],
+                            nutrition: meal ? meal.nutrition : null,
+                            hasUserAllergen: hasUserAllergen
+                        });
+                    });
+
+                    // 마지막 주 목, 금 빈 칸 추가
+                    calendar.push({ date: null, dateLabel: "" });
+                    calendar.push({ date: null, dateLabel: "" });
+
+                    this.calendarDays = calendar;
+                },
+
+                containsUserAllergen(allergies) {
+                    if (!allergies || allergies.length === 0 || this.userAllergies.length === 0) return false;
+                    return allergies.some(a => this.userAllergies.includes(a));
+                },
+
+                // Modal Handlers
+                openDetailModal(day) {
+                    this.selectedDay = day;
+                    this.isDetailModalOpen = true;
+                    this.$nextTick(() => lucide.createIcons());
+                },
+                closeDetailModal() {
+                    this.isDetailModalOpen = false;
+                },
+
+                openAllergyModal() {
+                    this.tempAllergies = [...this.userAllergies];
+                    this.isAllergyModalOpen = true;
+                    this.$nextTick(() => lucide.createIcons());
+                },
+                closeAllergyModal() {
+                    this.isAllergyModalOpen = false;
+                },
+                saveAllergies() {
+                    this.userAllergies = [...this.tempAllergies];
+                    localStorage.setItem('todayMeal_userAllergies', JSON.stringify(this.userAllergies));
+                    this.buildCalendar();
+                    this.closeAllergyModal();
+                },
+
+                openAdminModal() {
+                    this.adminSelectedDate = "9/1";
+                    this.loadAdminData();
+                    this.isAdminModalOpen = true;
+                    this.$nextTick(() => lucide.createIcons());
+                },
+                closeAdminModal() {
+                    this.isAdminModalOpen = false;
+                },
+                loadAdminData() {
+                    const data = this.mealsData[this.adminSelectedDate];
+                    if (data) {
+                        this.adminMenuText = data.menu.map(m => {
+                            return m.allergies.length > 0 ? `${m.name}(${m.allergies.join('.')})` : m.name;
+                        }).join('\n');
+                        this.adminNutrition = { ...data.nutrition };
+                    } else {
+                        this.adminMenuText = "";
+                        this.adminNutrition = { kcal: 0, protein: 0, calcium: 0, iron: 0 };
+                    }
+                },
+                saveAdminData() {
+                    const lines = this.adminMenuText.split('\n').filter(l => l.trim() !== "");
+                    const parsedMenu = lines.map(line => {
+                        const match = line.match(/^(.+?)(?:\(([\d.]+)\))?$/);
+                        if (match) {
+                            const name = match[1].trim();
+                            const allergyCodes = match[2] ? match[2].split('.').map(Number).filter(n => !isNaN(n)) : [];
+                            return { name, allergies: allergyCodes };
+                        }
+                        return { name: line.trim(), allergies: [] };
+                    });
+
+                    this.mealsData[this.adminSelectedDate] = {
+                        menu: parsedMenu,
+                        nutrition: {
+                            kcal: parseFloat(this.adminNutrition.kcal) || 0,
+                            protein: parseFloat(this.adminNutrition.protein) || 0,
+                            calcium: parseFloat(this.adminNutrition.calcium) || 0,
+                            iron: parseFloat(this.adminNutrition.iron) || 0
+                        }
+                    };
+
+                    localStorage.setItem('todayMeal_mealsData_202609', JSON.stringify(this.mealsData));
+                    this.buildCalendar();
+                    this.closeAdminModal();
+                },
+                resetToDefaultData() {
+                    if (confirm('초기 언주중학교 9월 급식 데이터로 되돌리시겠습니까?')) {
+                        this.mealsData = JSON.parse(JSON.stringify(DEFAULT_MEALS_DATA));
+                        localStorage.removeItem('todayMeal_mealsData_202609');
+                        this.buildCalendar();
+                        this.loadAdminData();
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
