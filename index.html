@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의밥 - 2026년 9월 언주중학교 급식 & 영양 케어</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter & Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mint: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            400: '#4ade80',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .backdrop-blur-custom {
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-mint-100 selection:text-mint-600">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-custom border-b border-slate-200/80 shadow-sm transition-all duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-mint-500 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-mint-500/20">
+                    <i data-lucide="utensils" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-800 flex items-center gap-2">
+                        오늘의밥
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-mint-50 text-mint-600 font-medium border border-mint-200">언주중학교</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Header Right Actions -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- User Allergy Settings Button -->
+                <button id="openAllergyModalBtn" class="inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 active:bg-slate-300 rounded-xl transition-all duration-150">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500"></i>
+                    <span>알레르기 사항 입력</span>
+                    <span id="activeAllergyCountBadge" class="hidden ml-1 px-1.5 py-0.2 text-[10px] bg-red-500 text-white rounded-full font-bold">0</span>
+                </button>
+
+                <!-- Admin Mode Toggle Button -->
+                <button id="toggleAdminBtn" class="inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl transition-all duration-150">
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-500" id="adminBtnIcon"></i>
+                    <span id="adminBtnText">관리자 모드</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full">
+        
+        <!-- Status & Banner Notification -->
+        <div id="allergyStatusBanner" class="mb-6 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all duration-300">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 rounded-xl bg-mint-50 text-mint-600">
+                    <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800">맞춤 알레르기 케어 및 주의 알림</h3>
+                    <p id="allergyStatusText" class="text-xs text-slate-500 mt-0.5">설정된 알레르기가 없습니다. 상단 [알레르기 사항 입력]에서 본인의 알레르기를 체크해보세요.</p>
+                </div>
+            </div>
+            <div id="activeAllergiesTags" class="flex flex-wrap gap-1.5 max-w-md">
+                <!-- Dynamically populated allergy pills -->
+            </div>
+        </div>
+
+        <!-- Admin Info & Action Bar (Visible in Admin Mode) -->
+        <div id="adminNoticeBar" class="hidden mb-6 p-4.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-amber-900 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-amber-200/60 rounded-xl text-amber-800">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm text-amber-900">[관리자 인증 완료]</span>
+                        <span class="text-xs bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-md font-semibold">편집 권한 활성</span>
+                    </div>
+                    <p class="text-xs text-amber-700/90 mt-0.5">날짜 카드를 눌러 개별 수정하거나, AI 자동 분석 창을 열어 사진/텍스트로 다음 달 식단표를 등록하세요.</p>
+                </div>
+            </div>
+
+            <!-- Admin Toolbar Actions -->
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                <button id="openAiImportBtn" class="px-3.5 py-2 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-md shadow-purple-500/10 transition-all flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>🤖 AI 식단 자동 등록/변경</span>
+                </button>
+                <button id="openChangePinBtn" class="px-3 py-2 text-xs font-semibold text-amber-800 bg-amber-200/60 hover:bg-amber-200 rounded-xl transition-colors flex items-center gap-1">
+                    <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+                    <span>비밀번호 변경</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Calendar Navigation Header -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-4 sm:p-6 mb-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <h2 id="currentYearMonth" class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">2026년 9월</h2>
+                    <button id="todayBtn" class="px-3 py-1 text-xs font-semibold text-mint-600 bg-mint-50 hover:bg-mint-100 rounded-lg transition-colors border border-mint-200">
+                        오늘
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="prevMonthBtn" class="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-600" title="이전 달">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button id="nextMonthBtn" class="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-600" title="다음 달">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calendar Days Header -->
+            <div class="grid grid-cols-7 gap-1 mt-6 text-center text-xs font-bold text-slate-400 pb-2 border-b border-slate-100">
+                <div class="text-red-500">일</div>
+                <div>월</div>
+                <div>화</div>
+                <div>수</div>
+                <div>목</div>
+                <div>금</div>
+                <div class="text-blue-500">토</div>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2 mt-2">
+                <!-- Dynamic Calendar Cell Injection -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-slate-600">오늘의밥</span>
+                <span>| 언주중학교 급식 & 스마트 영양 알리미</span>
+            </div>
+            <p>© 2026 Today's Meal. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- 1. USER ALLERGY CHECKBOX MODAL -->
+    <div id="allergyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-transform duration-200">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="flex items-center space-x-2">
+                    <div class="p-2 rounded-xl bg-amber-50 text-amber-500">
+                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800">알레르기 유발 성분 선택</h3>
+                </div>
+                <button class="closeModalBtn p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body (Checkbox Grid) -->
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <p class="text-xs text-slate-500 mb-4">자신에게 해당하는 알레르기 항목을 체크하세요. 체크된 성분이 들어간 급식 메뉴에는 <span class="text-red-500 font-bold">'주의'</span> 표시가 적용됩니다.</p>
+                <div id="allergyCheckboxGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    <!-- Allergy Checkboxes injected via JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center">
+                <button id="resetAllergiesBtn" class="px-3.5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 rounded-xl transition-colors">
+                    전체 해제
+                </button>
+                <div class="flex space-x-2">
+                    <button class="closeModalBtn px-4 py-2.5 text-xs font-semibold text-slate-600 bg-slate-200/70 hover:bg-slate-200 rounded-xl transition-colors">
+                        닫기
+                    </button>
+                    <button id="saveAllergiesBtn" class="px-5 py-2.5 text-xs font-bold text-white bg-mint-500 hover:bg-mint-600 active:bg-mint-700 rounded-xl shadow-md shadow-mint-500/20 transition-all">
+                        저장 및 적용
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MEAL DETAIL & NUTRITION MODAL -->
+    <div id="mealDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-transform duration-200">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-mint-50/50 to-white">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="detailModalDate" class="text-xs font-bold text-mint-600 bg-mint-50 border border-mint-100 px-2.5 py-1 rounded-full">2026.09.01 (화)</span>
+                        <span id="detailModalTargetTag" class="hidden text-xs font-bold text-purple-700 bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-full"></span>
+                    </div>
+                    <h3 id="detailModalTitle" class="text-xl font-bold text-slate-800 mt-2">오늘의 학교급식 상세</h3>
+                </div>
+                <button class="closeModalBtn p-1.5 text-slate-400 hover:text-slate-600 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 max-h-[70vh] overflow-y-auto space-y-6">
+                <!-- Safety Warning Banner inside Modal -->
+                <div id="modalAllergyWarningBanner" class="hidden p-3.5 rounded-2xl bg-red-50 border border-red-200/70 text-red-700 flex items-center space-x-3 text-xs font-medium">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0"></i>
+                    <span id="modalWarningText">주의! 체크하신 알레르기 유발 성분이 본 식단에 포함되어 있습니다.</span>
+                </div>
+
+                <!-- Meal Items Section -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="utensils" class="w-4 h-4 text-mint-500"></i>
+                        급식 메뉴 구성
+                    </h4>
+                    <div id="detailMenuList" class="space-y-2">
+                        <!-- Meal cards injected dynamically -->
+                    </div>
+                </div>
+
+                <!-- Nutritional Breakdown Section -->
+                <div class="bg-slate-50 p-4.5 rounded-2xl border border-slate-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="activity" class="w-4 h-4 text-mint-500"></i>
+                            영양 성분 함량
+                        </h4>
+                        <span id="detailTotalCalories" class="text-sm font-extrabold text-mint-600">0 kcal</span>
+                    </div>
+
+                    <!-- Macro Progress Bars -->
+                    <div class="space-y-3 pt-1">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500 font-medium">단백질</span>
+                                <span id="detailProteinText" class="font-bold text-slate-700">0g</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div id="detailProteinBar" class="h-full bg-emerald-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500 font-medium">칼슘</span>
+                                <span id="detailCalciumText" class="font-bold text-slate-700">0mg</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div id="detailCalciumBar" class="h-full bg-blue-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500 font-medium">철분</span>
+                                <span id="detailIronText" class="font-bold text-slate-700">0mg</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div id="detailIronBar" class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center">
+                <button id="modalAdminEditTrigger" class="hidden px-3.5 py-2 text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-xl transition-colors flex items-center gap-1.5">
+                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                    <span>이 날짜 식단 수정</span>
+                </button>
+                <div class="ml-auto">
+                    <button class="closeModalBtn px-5 py-2 text-xs font-bold text-slate-700 bg-slate-200/70 hover:bg-slate-200 rounded-xl transition-all">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ADMIN PIN AUTH MODAL -->
+    <div id="adminPinModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-transform duration-200">
+            <div class="px-6 py-5 border-b border-slate-100 text-center bg-slate-50/50">
+                <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                    <i data-lucide="lock" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">관리자 비밀번호 입력</h3>
+                <p class="text-xs text-slate-500 mt-1">급식 수정 및 관리자 기능 접속을 위해 4자리 비밀번호를 입력해주세요.</p>
+            </div>
+
+            <div class="p-6 text-center space-y-4">
+                <div>
+                    <input type="password" id="adminPinInput" maxlength="4" placeholder="••••" class="w-36 text-center text-2xl font-bold tracking-widest px-4 py-3 border-2 border-slate-200 rounded-2xl focus:border-amber-500 focus:outline-none transition-colors">
+                </div>
+                <p id="pinAuthError" class="text-xs font-semibold text-red-500 hidden">비밀번호가 일치하지 않습니다. 다시 입력해주세요.</p>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex justify-end space-x-2">
+                <button class="closePinModalBtn px-4 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 rounded-xl">
+                    취소
+                </button>
+                <button id="submitPinAuthBtn" class="px-5 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md transition-all">
+                    확인 및 접속
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. CHANGE PIN MODAL -->
+    <div id="changePinModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-3xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-transform duration-200">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
+                <div class="flex items-center space-x-2">
+                    <div class="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                        <i data-lucide="key-round" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-800">비밀번호 변경</h3>
+                </div>
+                <button class="closeChangePinModalBtn p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">현재 비밀번호 (4자리)</label>
+                    <input type="password" id="curPinInput" maxlength="4" placeholder="••••" class="w-full px-3 py-2 text-sm text-center tracking-widest border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">새 비밀번호 (4자리)</label>
+                    <input type="password" id="newPinInput" maxlength="4" placeholder="••••" class="w-full px-3 py-2 text-sm text-center tracking-widest border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">새 비밀번호 확인</label>
+                    <input type="password" id="confirmPinInput" maxlength="4" placeholder="••••" class="w-full px-3 py-2 text-sm text-center tracking-widest border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <p id="changePinError" class="text-xs font-semibold text-red-500 hidden"></p>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex justify-end space-x-2">
+                <button class="closeChangePinModalBtn px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 rounded-xl">
+                    취소
+                </button>
+                <button id="saveNewPinBtn" class="px-5 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md transition-all">
+                    변경 저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. AI MEAL IMPORT MODAL (🤖 AI 식단 자동 분석 및 등록 - 텍스트 + 사진 인식) -->
+    <div id="aiImportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-transform duration-200">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50 via-indigo-50 to-white">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
+                        <i data-lucide="bot" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">AI 멀티모달 스마트 급식 파서</h3>
+                        <p class="text-xs text-purple-700 font-medium">영양소식지 이미지/사진을 첨부하거나 텍스트를 붙여넣으시면 AI가 식단을 자동 인식합니다.</p>
+                    </div>
+                </div>
+                <button class="closeAiModalBtn p-1.5 text-slate-400 hover:text-slate-600 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+                    <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-4 h-4 text-purple-600"></i>
+                        <span>적용 대상 연월 선택:</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <select id="aiTargetYear" class="px-3 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="2026">2026년</option>
+                            <option value="2027">2027년</option>
+                        </select>
+                        <select id="aiTargetMonth" class="px-3 py-1.5 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="10" selected>10월</option>
+                            <option value="11">11월</option>
+                            <option value="12">12월</option>
+                            <option value="1">1월</option>
+                            <option value="2">2월</option>
+                            <option value="3">3월</option>
+                            <option value="4">4월</option>
+                            <option value="5">5월</option>
+                            <option value="6">6월</option>
+                            <option value="7">7월</option>
+                            <option value="8">8월</option>
+                            <option value="9">9월</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex bg-slate-100 p-1 rounded-2xl gap-1">
+                    <button id="aiTabImageBtn" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white text-purple-700 shadow-xs flex items-center justify-center gap-1.5">
+                        <i data-lucide="camera" class="w-4 h-4"></i>
+                        <span>📸 사진 / 이미지 업로드 인식</span>
+                    </button>
+                    <button id="aiTabTextBtn" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <span>📝 텍스트 직접 입력</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Image Upload -->
+                <div id="aiImageTabSection" class="space-y-3">
+                    <div id="imageDropzone" class="border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/40 hover:bg-purple-50 rounded-2xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px]">
+                        <input type="file" id="aiImageInput" accept="image/*" class="hidden">
+                        
+                        <div id="dropzoneEmptyState" class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-2 shadow-sm">
+                                <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-xs font-bold text-slate-700">식단표 촬영 사진 또는 영양소식지 이미지 업로드</p>
+                            <p class="text-[11px] text-slate-400 mt-1">클릭하여 파일 선택 또는 이미지 파일을 여기로 드래그하세요</p>
+                        </div>
+
+                        <div id="dropzonePreviewState" class="hidden flex-col items-center w-full">
+                            <div class="relative max-h-40 rounded-xl overflow-hidden border border-purple-200 shadow-md mb-2">
+                                <img id="uploadedImagePreview" src="" alt="식단표 이미지 프리뷰" class="max-h-40 object-contain">
+                                <button id="removeUploadedImgBtn" class="absolute top-2 right-2 bg-slate-900/70 hover:bg-slate-900 text-white p-1 rounded-lg transition-colors">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <p id="uploadedFileName" class="text-xs font-bold text-purple-900 truncate max-w-xs"></p>
+                        </div>
+                    </div>
+
+                    <div id="ocrScanningStatus" class="hidden p-3 bg-indigo-50 border border-indigo-200 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between text-xs font-bold text-indigo-900">
+                            <span class="flex items-center gap-1.5">
+                                <i data-lucide="scan" class="w-4 h-4 text-indigo-600 animate-spin"></i>
+                                <span>AI 시각 레이아웃 OCR 스캔 중...</span>
+                            </span>
+                            <span id="ocrPercentText">0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-indigo-200 rounded-full overflow-hidden">
+                            <div id="ocrProgressBar" class="h-full bg-indigo-600 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Textarea -->
+                <div id="aiTextTabSection" class="hidden space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-600">식단표 텍스트 입력:</span>
+                        <button id="loadPresetOctoberTextBtn" class="px-2.5 py-1 text-[11px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200 flex items-center gap-1">
+                            <i data-lucide="file-text" class="w-3 h-3"></i>
+                            <span>10월 샘플 식단 텍스트 넣기</span>
+                        </button>
+                    </div>
+                    <div>
+                        <textarea id="aiRawTextInput" rows="7" placeholder="예시:&#10;10/1 [1학년만]&#10;현미찹쌀밥&#10;소고기무국(5.6.16)&#10;제육볶음(5.6.10.13)&#10;배추김치(9)&#10;650.5/30.2/180.0/3.2" class="w-full p-3.5 text-xs font-mono border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-slate-50/50 leading-relaxed"></textarea>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-purple-50/60 rounded-2xl border border-purple-100 text-[11px] text-purple-900 space-y-1">
+                    <div class="font-bold flex items-center gap-1">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-600"></i>
+                        <span>AI 식단 분석 지원 기능</span>
+                    </div>
+                    <p class="text-purple-800/80">• 사진 인식: 촬영한 식단표 이미지에서 문자, 알레르기 번호, 영양 정보 자동 추출</p>
+                    <p class="text-purple-800/80">• 대괄호 태그: <code class="bg-purple-100 px-1 rounded">[3학년만]</code> 문구는 날짜 옆 뱃지로 자동 전환됩니다.</p>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center">
+                <button class="closeAiModalBtn px-4 py-2.5 text-xs font-semibold text-slate-600 bg-slate-200/70 hover:bg-slate-200 rounded-xl transition-colors">
+                    닫기
+                </button>
+                <button id="runAiParserBtn" class="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-md transition-all flex items-center gap-1.5">
+                    <i data-lucide="wand-2" class="w-4 h-4"></i>
+                    <span>AI 스캔 분석 및 식단표에 바로 반영</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MANUAL ADMIN MEAL EDIT MODAL -->
+    <div id="adminEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-transform duration-200">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
+                <div class="flex items-center space-x-2">
+                    <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">개별 날짜 식단 및 영양 편집</h3>
+                        <p id="adminEditDateText" class="text-xs text-amber-700 font-medium">날짜 선택됨</p>
+                    </div>
+                </div>
+                <button class="closeAdminModalBtn p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 max-h-[70vh] overflow-y-auto space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">대상 구분 태그 (예: 3학년만, 시험응원)</label>
+                    <input type="text" id="editTargetTag" placeholder="예: 3학년만" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none mb-3">
+
+                    <label class="block text-xs font-bold text-slate-700 mb-2">식단 메뉴 구성 (음식명 / 알레르기 번호 태그)</label>
+                    <div id="adminDishesContainer" class="space-y-3">
+                        <!-- Dynamic dish rows -->
+                    </div>
+                    <button id="addDishRowBtn" class="mt-3 w-full py-2 border border-dashed border-slate-300 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors flex items-center justify-center gap-1">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>음식 항목 추가</span>
+                    </button>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">열량 (kcal)</label>
+                        <input type="number" step="0.1" id="editCalories" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-mint-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">단백질 (g)</label>
+                        <input type="number" step="0.1" id="editProtein" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-mint-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">칼슘 (mg)</label>
+                        <input type="number" step="0.1" id="editCalcium" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-mint-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">철분 (mg)</label>
+                        <input type="number" step="0.1" id="editIron" class="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-mint-500 focus:outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex justify-end space-x-2">
+                <button class="closeAdminModalBtn px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 rounded-xl">
+                    취소
+                </button>
+                <button id="saveAdminMealBtn" class="px-5 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md transition-all">
+                    저장하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. SAFE / ALERT TOAST NOTIFICATION -->
+    <div id="toastNotification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900/90 backdrop-blur-md text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 border border-slate-700/50">
+            <div id="toastIconContainer" class="p-1 rounded-full bg-emerald-500/20 text-emerald-400">
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+            </div>
+            <p id="toastMessage" class="text-xs font-semibold">알림 메시지입니다.</p>
+        </div>
+    </div>
+
+    <script>
+        const ALLERGEN_MAP = {
+            1: "난류",
+            2: "우유",
+            3: "메밀",
+            4: "땅콩",
+            5: "대두",
+            6: "밀",
+            7: "고등어",
+            8: "게",
+            9: "새우",
+            10: "돼지고기",
+            11: "복숭아",
+            12: "토마토",
+            13: "아황산류/조개류",
+            14: "호두",
+            15: "닭고기",
+            16: "쇠고기",
+            17: "오징어",
+            18: "잣/기타"
+        };
+
+        const STORAGE_KEY_ALLERGIES = "todays_meal_user_allergies_v3";
+        const STORAGE_KEY_MEALS = "todays_meal_unju_data_v3";
+        const STORAGE_KEY_ADMIN_PIN = "todays_meal_admin_pin_v3";
+
+        // Application State
+        let currentDate = new Date(2026, 8, 1); // 2026년 9월
+        let activeAdminMode = false;
+        let adminPin = "0926";
+        let selectedAllergyCodes = [];
+        let mealsData = {};
+        let selectedDateKeyForEdit = null;
+
+        let currentUploadedImageFile = null;
+        let activeAiTab = 'image';
+
+        function getUnjuSchoolSeptemberData() {
+            return {
+                "2026-09-01": {
+                    dishes: [
+                        { name: "현미찹쌀밥", allergies: [] },
+                        { name: "맑은미역국", allergies: [5, 6] },
+                        { name: "버섯소불고기", allergies: [5, 6, 13, 16, 18] },
+                        { name: "한식잡채", allergies: [1, 5, 6, 13] },
+                        { name: "배추겉절이", allergies: [9] },
+                        { name: "파베생초코", allergies: [2, 5] }
+                    ],
+                    calories: 569.5,
+                    protein: 29.8,
+                    calcium: 239.3,
+                    iron: 4.9
+                },
+                "2026-09-02": {
+                    dishes: [
+                        { name: "돈코츠라멘", allergies: [1, 5, 6, 7, 10, 16] },
+                        { name: "후리가케밥", allergies: [5, 6] },
+                        { name: "새우튀김/치폴레마요D", allergies: [1, 2, 5, 6, 9, 12] },
+                        { name: "도라지오이무침", allergies: [5, 6, 13] },
+                        { name: "깍두기", allergies: [9] },
+                        { name: "유기농바닐라아이스크림", allergies: [1, 2] }
+                    ],
+                    calories: 1117.0,
+                    protein: 34.7,
+                    calcium: 357.18,
+                    iron: 2.8
+                },
+                "2026-09-03": {
+                    dishes: [
+                        { name: "기장밥", allergies: [] },
+                        { name: "닭곰탕", allergies: [15] },
+                        { name: "삼치데리야끼구이", allergies: [5, 6, 13] },
+                        { name: "에그랑땅/케찹", allergies: [1, 2, 5, 6, 10, 12, 15, 16, 18] },
+                        { name: "총각김치", allergies: [9] },
+                        { name: "샤인머스켓", allergies: [] }
+                    ],
+                    calories: 685.2,
+                    protein: 39.0,
+                    calcium: 151.1,
+                    iron: 4.0
+                },
+                "2026-09-04": {
+                    dishes: [
+                        { name: "완두콩밥/짜장소스", allergies: [1, 5, 6, 10, 13] },
+                        { name: "해물짬뽕국", allergies: [5, 6, 8, 9, 10, 13, 17, 18] },
+                        { name: "동물복지깐풍기", allergies: [1, 5, 6, 10, 16, 18] },
+                        { name: "버터찹쌀김부각", allergies: [1, 2, 5, 6] },
+                        { name: "깍두기", allergies: [9] },
+                        { name: "골드키위", allergies: [] }
+                    ],
+                    calories: 642.2,
+                    protein: 29.4,
+                    calcium: 155.5,
+                    iron: 17.2
+                },
+                "2026-09-07": {
+                    dishes: [
+                        { name: "혼합잡곡밥", allergies: [5] },
+                        { name: "호박고추장찌개", allergies: [5, 6] },
+                        { name: "수육보쌈", allergies: [5, 6, 10, 13] },
+                        { name: "비빔막국수", allergies: [3, 5, 6, 9, 13] },
+                        { name: "보쌈김치", allergies: [9] },
+                        { name: "조각배", allergies: [] }
+                    ],
+                    calories: 750.6,
+                    protein: 35.4,
+                    calcium: 138.9,
+                    iron: 3.4
+                },
+                "2026-09-08": {
+                    dishes: [
+                        { name: "기장밥", allergies: [] },
+                        { name: "쇠고기우거지국", allergies: [5, 6, 16] },
+                        { name: "춘천닭갈비", allergies: [5, 6, 13, 15] },
+                        { name: "찹쌀콩멸치볶음", allergies: [5, 13] },
+                        { name: "열무김치", allergies: [9] },
+                        { name: "노티드우유생크림도넛", allergies: [1, 2, 5, 6] }
+                    ],
+                    calories: 762.0,
+                    protein: 33.6,
+                    calcium: 177.9,
+                    iron: 2.7
+                },
+                "2026-09-09": {
+                    dishes: [
+                        { name: "날치알김치볶음밥", allergies: [5, 6, 9, 10, 13, 18] },
+                        { name: "미니우동국", allergies: [1, 5, 6, 9, 13] },
+                        { name: "혜화동치즈돈까스/소스", allergies: [1, 2, 5, 6, 10, 12, 16, 18] },
+                        { name: "양배추샐러드/참깨D", allergies: [1, 5, 6] },
+                        { name: "단무지무침", allergies: [13] },
+                        { name: "딸기우유", allergies: [2] }
+                    ],
+                    calories: 736.4,
+                    protein: 31.0,
+                    calcium: 285.4,
+                    iron: 2.2
+                },
+                "2026-09-10": {
+                    targetTag: "동아리",
+                    dishes: [
+                        { name: "귀리밥", allergies: [] },
+                        { name: "맑은조랭이떡국", allergies: [1, 5, 6] },
+                        { name: "주꾸미순대볶음/무쌈", allergies: [2, 5, 6, 10, 13, 16] },
+                        { name: "삼색계란찜", allergies: [1, 2] },
+                        { name: "오이김치", allergies: [9] },
+                        { name: "사과", allergies: [] }
+                    ],
+                    calories: 552.3,
+                    protein: 18.9,
+                    calcium: 135.0,
+                    iron: 3.9
+                },
+                "2026-09-11": {
+                    dishes: [
+                        { name: "현미찹쌀밥", allergies: [] },
+                        { name: "콩가루배추국", allergies: [5, 6, 9] },
+                        { name: "제육볶음", allergies: [5, 6, 10, 13] },
+                        { name: "감자야채볶음", allergies: [] },
+                        { name: "양배추쌈/저염두부쌈장", allergies: [5, 6, 13] },
+                        { name: "총각김치", allergies: [9] },
+                        { name: "아이스블루베리&치즈큐브", allergies: [1, 2, 5, 6] }
+                    ],
+                    calories: 529.8,
+                    protein: 31.2,
+                    calcium: 247.6,
+                    iron: 2.9
+                },
+                "2026-09-14": {
+                    dishes: [
+                        { name: "혼합잡곡밥", allergies: [5] },
+                        { name: "소고기무국", allergies: [5, 6, 16] },
+                        { name: "분모자로제찜닭", allergies: [1, 2, 5, 6, 10, 12, 13, 15, 16] },
+                        { name: "애호박새우살볶음", allergies: [9, 13] },
+                        { name: "동치미", allergies: [9] },
+                        { name: "캠벨포도", allergies: [] }
+                    ],
+                    calories: 681.9,
+                    protein: 30.7,
+                    calcium: 103.1,
+                    iron: 2.3
+                },
+                "2026-09-15": {
+                    dishes: [
+                        { name: "찰보리밥", allergies: [] },
+                        { name: "돈육김치찌개", allergies: [5, 9, 10] },
+                        { name: "오삼불고기", allergies: [5, 6, 10, 13, 17] },
+                        { name: "고구마순들깨볶음", allergies: [] },
+                        { name: "상추파절이", allergies: [5, 6, 13] },
+                        { name: "총각김치", allergies: [9] },
+                        { name: "우리밀하트파이", allergies: [2, 6] }
+                    ],
+                    calories: 523.8,
+                    protein: 21.4,
+                    calcium: 124.2,
+                    iron: 2.1
+                },
+                "2026-09-16": {
+                    dishes: [
+                        { name: "두끼st국물떡볶이", allergies: [2, 5, 6, 16] },
+                        { name: "우동장국", allergies: [1, 2, 5, 6, 9, 13] },
+                        { name: "참치마요밥(미니)", allergies: [1, 5, 13] },
+                        { name: "당면만두/김말이튀김", allergies: [2, 5, 6, 10, 12, 15, 16] },
+                        { name: "단무지", allergies: [] },
+                        { name: "쿨피스(복숭아맛)", allergies: [11, 13] }
+                    ],
+                    calories: 843.5,
+                    protein: 25.7,
+                    calcium: 167.9,
+                    iron: 8.2
+                },
+                "2026-09-17": {
+                    dishes: [
+                        { name: "현미찹쌀밥/돌자반", allergies: [] },
+                        { name: "강릉초당순두부백탕", allergies: [5, 6, 9] },
+                        { name: "돼지고기김치찜", allergies: [5, 6, 9, 10, 13] },
+                        { name: "콘치즈구이", allergies: [1, 2, 5, 13] },
+                        { name: "오이소박이", allergies: [9] },
+                        { name: "파인애플", allergies: [] }
+                    ],
+                    calories: 590.4,
+                    protein: 35.8,
+                    calcium: 305.7,
+                    iron: 5.1
+                },
+                "2026-09-18": {
+                    dishes: [
+                        { name: "잔치국수", allergies: [1, 5, 6] },
+                        { name: "김가루밥(미니)", allergies: [5, 6, 13, 16] },
+                        { name: "북채후라이드치킨", allergies: [2, 4, 5, 6, 12, 15, 16, 18] },
+                        { name: "오이고추된장무침", allergies: [5, 6] },
+                        { name: "배추겉절이", allergies: [9] },
+                        { name: "토핑요거트", allergies: [2, 6] }
+                    ],
+                    calories: 717.9,
+                    protein: 30.8,
+                    calcium: 245.1,
+                    iron: 2.4
+                },
+                "2026-09-21": {
+                    dishes: [
+                        { name: "마파두부덮밥", allergies: [5, 6, 10, 13, 18] },
+                        { name: "맑은콩나물국", allergies: [5] },
+                        { name: "닭장작오븐구이", allergies: [2, 5, 6, 12, 13, 15] },
+                        { name: "진미채조림", allergies: [1, 5, 6, 13, 17, 18] },
+                        { name: "백김치", allergies: [9] },
+                        { name: "조각멜론", allergies: [] }
+                    ],
+                    calories: 859.3,
+                    protein: 56.6,
+                    calcium: 147.8,
+                    iron: 3.4
+                },
+                "2026-09-22": {
+                    targetTag: "추석맞이",
+                    dishes: [
+                        { name: "현미찹쌀밥", allergies: [] },
+                        { name: "소고기당면국", allergies: [5, 6, 16] },
+                        { name: "오리고추장불고기", allergies: [5, 6, 13] },
+                        { name: "돈육전/감자전", allergies: [1, 2, 5, 6, 10, 16] },
+                        { name: "배추김치", allergies: [9] },
+                        { name: "보름달송편", allergies: [] }
+                    ],
+                    calories: 780.0,
+                    protein: 34.2,
+                    calcium: 185.0,
+                    iron: 3.5
+                },
+                "2026-09-23": {
+                    dishes: [
+                        { name: "로제스파게티", allergies: [1, 2, 5, 6, 10, 12, 15, 16, 18] },
+                        { name: "양송이크림스프", allergies: [2, 5, 6, 13, 16] },
+                        { name: "돈마호크/옥수수콘립", allergies: [1, 5, 6, 10, 15, 16] },
+                        { name: "시저샐러드", allergies: [1, 2, 5, 6, 12, 16, 18] },
+                        { name: "오이피클", allergies: [] },
+                        { name: "사과맛요구르트", allergies: [2] }
+                    ],
+                    calories: 690.7,
+                    protein: 36.8,
+                    calcium: 199.0,
+                    iron: 2.1
+                },
+                "2026-09-24": {
+                    holidayNotice: "🌕 추석 연휴 (급식 없음)",
+                    dishes: [],
+                    calories: 0, protein: 0, calcium: 0, iron: 0
+                },
+                "2026-09-25": {
+                    holidayNotice: "🌕 추석 연휴 (급식 없음)",
+                    dishes: [],
+                    calories: 0, protein: 0, calcium: 0, iron: 0
+                },
+                "2026-09-28": {
+                    targetTag: "시험응원",
+                    dishes: [
+                        { name: "백미밥", allergies: [] },
+                        { name: "한우소머리국밥", allergies: [5, 6, 16] },
+                        { name: "소떡소떡꼬치", allergies: [1, 2, 5, 6, 10, 12, 15] },
+                        { name: "도토리묵야채무침", allergies: [13] },
+                        { name: "섞박지", allergies: [9] },
+                        { name: "크림치즈바움쿠헨", allergies: [1, 2, 5, 6, 13] }
+                    ],
+                    calories: 870.9,
+                    protein: 28.4,
+                    calcium: 67.1,
+                    iron: 1.1
+                },
+                "2026-09-29": {
+                    targetTag: "3학년만",
+                    dishes: [
+                        { name: "옛날도시락밥", allergies: [2, 5, 6, 9, 10, 13, 16] },
+                        { name: "된장찌개", allergies: [5, 6] },
+                        { name: "고구마치즈닭갈비그라탕", allergies: [1, 2, 5, 6, 15, 16, 18] },
+                        { name: "계란후라이", allergies: [1] },
+                        { name: "동치미", allergies: [9] },
+                        { name: "쌀과자", allergies: [5] }
+                    ],
+                    calories: 1035.3,
+                    protein: 63.2,
+                    calcium: 307.6,
+                    iron: 5.5
+                },
+                "2026-09-30": {
+                    targetTag: "1, 3학년만",
+                    dishes: [
+                        { name: "양지쌀국수", allergies: [2, 5, 6, 15, 16, 18] },
+                        { name: "반미샌드위치", allergies: [1, 2, 5, 6, 10, 12, 13] },
+                        { name: "고구마/스프링롤(칠리D)", allergies: [5, 6, 8, 9] },
+                        { name: "하트단무지", allergies: [] },
+                        { name: "흑당버블밀크티", allergies: [2] }
+                    ],
+                    calories: 921.6,
+                    protein: 26.2,
+                    calcium: 200.3,
+                    iron: 3.8
+                }
+            };
+        }
+
+        function loadStateFromStorage() {
+            try {
+                const savedAllergies = localStorage.getItem(STORAGE_KEY_ALLERGIES);
+                if (savedAllergies) {
+                    selectedAllergyCodes = JSON.parse(savedAllergies);
+                }
+
+                const savedPin = localStorage.getItem(STORAGE_KEY_ADMIN_PIN);
+                if (savedPin) {
+                    adminPin = savedPin;
+                }
+
+                const savedMeals = localStorage.getItem(STORAGE_KEY_MEALS);
+                if (savedMeals) {
+                    mealsData = JSON.parse(savedMeals);
+                } else {
+                    mealsData = getUnjuSchoolSeptemberData();
+                    saveMealsToStorage();
+                }
+            } catch (e) {
+                console.error("Storage loading failed:", e);
+                mealsData = getUnjuSchoolSeptemberData();
+            }
+        }
+
+        function saveMealsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_MEALS, JSON.stringify(mealsData));
+            } catch (e) {
+                console.error("Meal storage save error:", e);
+            }
+        }
+
+        function saveAllergiesToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY_ALLERGIES, JSON.stringify(selectedAllergyCodes));
+            } catch (e) {
+                console.error("Allergy storage save error:", e);
+            }
+        }
+
+        function savePinToStorage(pin) {
+            try {
+                adminPin = pin;
+                localStorage.setItem(STORAGE_KEY_ADMIN_PIN, pin);
+            } catch (e) {
+                console.error("PIN storage save error:", e);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStateFromStorage();
+            initLucideIcons();
+            buildAllergyCheckboxGrid();
+            updateAllergyBanner();
+            renderCalendar();
+            setupEventListeners();
+        });
+
+        function initLucideIcons() {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        function showModal(modalEl) {
+            modalEl.classList.remove('hidden');
+            setTimeout(() => {
+                modalEl.classList.remove('opacity-0');
+                if (modalEl.firstElementChild) {
+                    modalEl.firstElementChild.classList.remove('scale-95');
+                    modalEl.firstElementChild.classList.add('scale-100');
+                }
+            }, 10);
+        }
+
+        function hideModal(modalEl) {
+            modalEl.classList.add('opacity-0');
+            if (modalEl.firstElementChild) {
+                modalEl.firstElementChild.classList.remove('scale-100');
+                modalEl.firstElementChild.classList.add('scale-95');
+            }
+            setTimeout(() => {
+                modalEl.classList.add('hidden');
+            }, 200);
+        }
+
+        function showToast(message, isWarning = false) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIconContainer = document.getElementById('toastIconContainer');
+
+            toastMsg.textContent = message;
+            if (isWarning) {
+                toastIconContainer.className = "p-1 rounded-full bg-red-500/20 text-red-400";
+                toastIconContainer.innerHTML = '<i data-lucide="alert-triangle" class="w-5 h-5"></i>';
+            } else {
+                toastIconContainer.className = "p-1 rounded-full bg-emerald-500/20 text-emerald-400";
+                toastIconContainer.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i>';
+            }
+            initLucideIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function buildAllergyCheckboxGrid() {
+            const container = document.getElementById('allergyCheckboxGrid');
+            container.innerHTML = '';
+
+            Object.keys(ALLERGEN_MAP).forEach(code => {
+                const numCode = parseInt(code);
+                const name = ALLERGEN_MAP[code];
+                const isChecked = selectedAllergyCodes.includes(numCode);
+
+                const item = document.createElement('label');
+                item.className = `flex items-center p-3 rounded-2xl border transition-all cursor-pointer text-xs font-medium ${
+                    isChecked ? 'bg-mint-50 border-mint-400 text-mint-700 shadow-xs' : 'bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-slate-100'
+                }`;
+                item.innerHTML = `
+                    <input type="checkbox" value="${numCode}" ${isChecked ? 'checked' : ''} class="allergy-checkbox w-4 h-4 text-mint-600 rounded border-slate-300 focus:ring-mint-500 mr-2.5">
+                    <span>${numCode}. ${name}</span>
+                `;
+                container.appendChild(item);
+            });
+
+            container.querySelectorAll('.allergy-checkbox').forEach(box => {
+                box.addEventListener('change', (e) => {
+                    const parent = e.target.closest('label');
+                    if (e.target.checked) {
+                        parent.className = 'flex items-center p-3 rounded-2xl border transition-all cursor-pointer text-xs font-medium bg-mint-50 border-mint-400 text-mint-700 shadow-xs';
+                    } else {
+                        parent.className = 'flex items-center p-3 rounded-2xl border transition-all cursor-pointer text-xs font-medium bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-slate-100';
+                    }
+                });
+            });
+        }
+
+        function updateAllergyBanner() {
+            const badge = document.getElementById('activeAllergyCountBadge');
+            const statusText = document.getElementById('allergyStatusText');
+            const tagsContainer = document.getElementById('activeAllergiesTags');
+
+            tagsContainer.innerHTML = '';
+
+            if (selectedAllergyCodes.length > 0) {
+                badge.textContent = selectedAllergyCodes.length;
+                badge.classList.remove('hidden');
+                statusText.innerHTML = `<strong>${selectedAllergyCodes.length}개</strong>의 알레르기 유발 물질이 등록되어 있습니다. 해당 성분이 포함된 급식에 <span class="text-red-500 font-bold">'주의'</span> 태그가 표시됩니다.`;
+
+                selectedAllergyCodes.forEach(code => {
+                    const tag = document.createElement('span');
+                    tag.className = "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200";
+                    tag.innerHTML = `<i data-lucide="shield-alert" class="w-3 h-3 text-amber-500"></i> ${ALLERGEN_MAP[code]}`;
+                    tagsContainer.appendChild(tag);
+                });
+            } else {
+                badge.classList.add('hidden');
+                statusText.textContent = "설정된 알레르기가 없습니다. 상단 [알레르기 사항 입력]에서 본인의 알레르기를 체크해보세요.";
+            }
+            initLucideIcons();
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('currentYearMonth').textContent = `${year}년 ${month + 1}월`;
+
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "min-h-[110px] sm:min-h-[140px] bg-slate-50/50 rounded-2xl border border-dashed border-slate-100";
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateObj = new Date(year, month, day);
+                const dayOfWeek = dateObj.getDay();
+
+                const dayData = mealsData[dateKey] || null;
+
+                let hasAllergyWarning = false;
+                if (dayData && dayData.dishes && selectedAllergyCodes.length > 0) {
+                    hasAllergyWarning = dayData.dishes.some(d =>
+                        d.allergies && d.allergies.some(a => selectedAllergyCodes.includes(a))
+                    );
+                }
+
+                const cell = document.createElement('div');
+                let cellStyle = "min-h-[110px] sm:min-h-[140px] p-2.5 sm:p-3 rounded-2xl border transition-all duration-150 flex flex-col justify-between cursor-pointer group bg-white hover:border-mint-300 hover:shadow-md ";
+
+                if (dayOfWeek === 0) {
+                    cellStyle += "border-slate-100 bg-slate-50/30 text-red-500";
+                } else if (dayOfWeek === 6) {
+                    cellStyle += "border-slate-100 bg-slate-50/30 text-blue-500";
+                } else {
+                    cellStyle += "border-slate-200/80 text-slate-800";
+                }
+
+                if (hasAllergyWarning) {
+                    cellStyle += " ring-2 ring-red-400/80 bg-red-50/10";
+                }
+
+                cell.className = cellStyle;
+                cell.onclick = () => openMealDetailModal(dateKey, dateObj);
+
+                let targetBadgeHtml = '';
+                if (dayData && dayData.targetTag) {
+                    targetBadgeHtml = `<span class="px-1.5 py-0.5 text-[10px] font-bold text-purple-700 bg-purple-100 border border-purple-200 rounded-md truncate max-w-[80px] sm:max-w-none">[${dayData.targetTag}]</span>`;
+                }
+
+                let headerHtml = `
+                    <div class="flex items-center justify-between w-full mb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-extrabold text-sm sm:text-base">${day}</span>
+                            ${targetBadgeHtml}
+                        </div>
+                        ${hasAllergyWarning ? '<span class="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-red-600 bg-red-100 border border-red-200 px-1.5 py-0.5 rounded-full animate-pulse"><i data-lucide="alert-circle" class="w-3 h-3"></i>주의</span>' : ''}
+                    </div>
+                `;
+
+                let contentHtml = '';
+                if (dayData) {
+                    if (dayData.holidayNotice) {
+                        contentHtml = `
+                            <div class="my-auto text-center py-2 px-1 rounded-xl bg-amber-50 text-amber-800 text-[11px] font-bold border border-amber-100">
+                                ${dayData.holidayNotice}
+                            </div>
+                        `;
+                    } else if (dayData.dishes && dayData.dishes.length > 0) {
+                        const previewDishes = dayData.dishes.slice(0, 3);
+                        const remainingCount = dayData.dishes.length - previewDishes.length;
+
+                        contentHtml = `<ul class="space-y-1 text-[11px] text-slate-600 font-medium">`;
+                        previewDishes.forEach(dish => {
+                            const isDishWarning = dish.allergies && dish.allergies.some(a => selectedAllergyCodes.includes(a));
+                            contentHtml += `
+                                <li class="truncate flex items-center justify-between">
+                                    <span class="${isDishWarning ? 'text-red-600 font-bold' : ''}">${dish.name}</span>
+                                    ${isDishWarning ? '<span class="text-[9px] text-red-500 font-bold ml-1">!</span>' : ''}
+                                </li>
+                            `;
+                        });
+                        if (remainingCount > 0) {
+                            contentHtml += `<li class="text-[10px] text-slate-400 font-semibold mt-0.5">+ 외 ${remainingCount}개</li>`;
+                        }
+                        contentHtml += `</ul>`;
+                    }
+                } else {
+                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                        contentHtml = `<p class="text-[11px] text-slate-300 italic my-auto">식단 미등록</p>`;
+                    }
+                }
+
+                let footerHtml = '';
+                if (dayData && dayData.calories > 0) {
+                    footerHtml = `
+                        <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-semibold">
+                            <span>${dayData.calories} kcal</span>
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-slate-300 group-hover:text-mint-500 transition-colors"></i>
+                        </div>
+                    `;
+                }
+
+                cell.innerHTML = headerHtml + contentHtml + footerHtml;
+                calendarGrid.appendChild(cell);
+            }
+
+            initLucideIcons();
+        }
+
+        function openMealDetailModal(dateKey, dateObj) {
+            selectedDateKeyForEdit = dateKey;
+            const dayData = mealsData[dateKey];
+
+            const dateFormatted = `${dateObj.getFullYear()}.${String(dateObj.getMonth() + 1).padStart(2, '0')}.${String(dateObj.getDate()).padStart(2, '0')}`;
+            const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+            const dayName = dayNames[dateObj.getDay()];
+
+            document.getElementById('detailModalDate').textContent = `${dateFormatted} (${dayName})`;
+
+            const targetTagEl = document.getElementById('detailModalTargetTag');
+            if (dayData && dayData.targetTag) {
+                targetTagEl.textContent = `[${dayData.targetTag}]`;
+                targetTagEl.classList.remove('hidden');
+            } else {
+                targetTagEl.classList.add('hidden');
+            }
+
+            const warningBanner = document.getElementById('modalAllergyWarningBanner');
+            const menuList = document.getElementById('detailMenuList');
+
+            menuList.innerHTML = '';
+
+            let hasAllergyWarning = false;
+
+            if (dayData) {
+                if (dayData.holidayNotice) {
+                    menuList.innerHTML = `
+                        <div class="p-6 text-center bg-amber-50 rounded-2xl border border-amber-200">
+                            <span class="text-2xl mb-2 block">🌕</span>
+                            <h4 class="font-bold text-amber-900 text-sm">${dayData.holidayNotice}</h4>
+                            <p class="text-xs text-amber-700 mt-1">즐거운 연휴 보내시기 바랍니다!</p>
+                        </div>
+                    `;
+                } else if (dayData.dishes && dayData.dishes.length > 0) {
+                    dayData.dishes.forEach(dish => {
+                        const containsAllergies = dish.allergies ? dish.allergies.filter(a => selectedAllergyCodes.includes(a)) : [];
+                        const isWarning = containsAllergies.length > 0;
+                        if (isWarning) hasAllergyWarning = true;
+
+                        const item = document.createElement('div');
+                        item.className = `p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
+                            isWarning ? 'bg-red-50/60 border-red-200' : 'bg-slate-50 border-slate-100'
+                        }`;
+
+                        let allergyBadgesHtml = '';
+                        if (dish.allergies && dish.allergies.length > 0) {
+                            allergyBadgesHtml = `<div class="flex flex-wrap gap-1 mt-1">`;
+                            dish.allergies.forEach(aCode => {
+                                const isUserCheck = selectedAllergyCodes.includes(aCode);
+                                allergyBadgesHtml += `
+                                    <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-md ${
+                                        isUserCheck ? 'bg-red-500 text-white' : 'bg-slate-200 text-slate-600'
+                                    }">
+                                        ${aCode}.${ALLERGEN_MAP[aCode] || '기타'}
+                                    </span>
+                                `;
+                            });
+                            allergyBadgesHtml += `</div>`;
+                        }
+
+                        item.innerHTML = `
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-bold text-slate-800">${dish.name}</span>
+                                    ${isWarning ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-red-500 text-white rounded-full">주의</span>' : ''}
+                                </div>
+                                ${allergyBadgesHtml}
+                            </div>
+                        `;
+                        menuList.appendChild(item);
+                    });
+                } else {
+                    menuList.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">등록된 메뉴가 없습니다.</p>`;
+                }
+
+                document.getElementById('detailTotalCalories').textContent = `${dayData.calories || 0} kcal`;
+                document.getElementById('detailProteinText').textContent = `${dayData.protein || 0}g`;
+                document.getElementById('detailCalciumText').textContent = `${dayData.calcium || 0}mg`;
+                document.getElementById('detailIronText').textContent = `${dayData.iron || 0}mg`;
+
+                // Progress bars (scaled)
+                document.getElementById('detailProteinBar').style.width = `${Math.min(((dayData.protein || 0) / 50) * 100, 100)}%`;
+                document.getElementById('detailCalciumBar').style.width = `${Math.min(((dayData.calcium || 0) / 400) * 100, 100)}%`;
+                document.getElementById('detailIronBar').style.width = `${Math.min(((dayData.iron || 0) / 10) * 100, 100)}%`;
+
+            } else {
+                menuList.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">식단 정보가 입력되지 않은 날짜입니다.</p>`;
+                document.getElementById('detailTotalCalories').textContent = `0 kcal`;
+                document.getElementById('detailProteinText').textContent = `0g`;
+                document.getElementById('detailCalciumText').textContent = `0mg`;
+                document.getElementById('detailIronText').textContent = `0mg`;
+            }
+
+            if (hasAllergyWarning) {
+                warningBanner.classList.remove('hidden');
+            } else {
+                warningBanner.classList.add('hidden');
+            }
+
+            const adminTrigger = document.getElementById('modalAdminEditTrigger');
+            if (activeAdminMode) {
+                adminTrigger.classList.remove('hidden');
+            } else {
+                adminTrigger.classList.add('hidden');
+            }
+
+            showModal(document.getElementById('mealDetailModal'));
+            initLucideIcons();
+        }
+
+        function parseAndApplyAiMealText(rawText, targetYear, targetMonth) {
+            const lines = rawText.split('\n');
+            let currentParseDateKey = null;
+            let currentDishes = [];
+            let currentTargetTag = null;
+            let currentCalories = 0, currentProtein = 0, currentCalcium = 0, currentIron = 0;
+            let countImported = 0;
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                // Date pattern matching e.g., 10/1 or 10월 1일
+                const dateMatch = trimmed.match(/^(?:(\d{1,2})[\/\.\-월]\s*(\d{1,2}))/);
+                if (dateMatch) {
+                    if (currentParseDateKey) {
+                        mealsData[currentParseDateKey] = {
+                            targetTag: currentTargetTag,
+                            dishes: currentDishes,
+                            calories: currentCalories,
+                            protein: currentProtein,
+                            calcium: currentCalcium,
+                            iron: currentIron
+                        };
+                        countImported++;
+                    }
+
+                    const m = String(parseInt(dateMatch[1])).padStart(2, '0');
+                    const d = String(parseInt(dateMatch[2])).padStart(2, '0');
+                    currentParseDateKey = `${targetYear}-${m}-${d}`;
+                    currentDishes = [];
+                    currentTargetTag = null;
+                    currentCalories = 0; currentProtein = 0; currentCalcium = 0; currentIron = 0;
+
+                    // Extract bracket target tag in date line if present
+                    const tagMatch = trimmed.match(/\[(.*?)\]/);
+                    if (tagMatch) {
+                        currentTargetTag = tagMatch[1].trim();
+                    }
+                    return;
+                }
+
+                // Macro nutrition pattern: 650.5/30.2/180.0/3.2
+                const macroMatch = trimmed.match(/^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)/);
+                if (macroMatch) {
+                    currentCalories = parseFloat(macroMatch[1]);
+                    currentProtein = parseFloat(macroMatch[2]);
+                    currentCalcium = parseFloat(macroMatch[3]);
+                    currentIron = parseFloat(macroMatch[4]);
+                    return;
+                }
+
+                if (currentParseDateKey) {
+                    let dishName = trimmed;
+                    let targetTagInDish = dishName.match(/\[(.*?)\]/);
+                    if (targetTagInDish) {
+                        currentTargetTag = targetTagInDish[1].trim();
+                        dishName = dishName.replace(/\[.*?\]/g, '').trim();
+                    }
+
+                    // Extract allergy numbers e.g. (5.6.16)
+                    const allergyMatch = dishName.match(/\(([\d\.]+)\)/);
+                    let allergies = [];
+                    if (allergyMatch) {
+                        allergies = allergyMatch[1].split('.').map(n => parseInt(n)).filter(n => !isNaN(n));
+                        dishName = dishName.replace(/\(([\d\.]+)\)/, '').trim();
+                    }
+
+                    if (dishName) {
+                        currentDishes.push({ name: dishName, allergies: allergies });
+                    }
+                }
+            });
+
+            if (currentParseDateKey) {
+                mealsData[currentParseDateKey] = {
+                    targetTag: currentTargetTag,
+                    dishes: currentDishes,
+                    calories: currentCalories,
+                    protein: currentProtein,
+                    calcium: currentCalcium,
+                    iron: currentIron
+                };
+                countImported++;
+            }
+
+            saveMealsToStorage();
+            return countImported;
+        }
+
+        function setupEventListeners() {
+            // Close buttons
+            document.querySelectorAll('.closeModalBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    hideModal(document.getElementById('allergyModal'));
+                    hideModal(document.getElementById('mealDetailModal'));
+                });
+            });
+
+            // Allergy Modal Open & Save
+            document.getElementById('openAllergyModalBtn').addEventListener('click', () => {
+                buildAllergyCheckboxGrid();
+                showModal(document.getElementById('allergyModal'));
+            });
+
+            document.getElementById('resetAllergiesBtn').addEventListener('click', () => {
+                selectedAllergyCodes = [];
+                buildAllergyCheckboxGrid();
+            });
+
+            document.getElementById('saveAllergiesBtn').addEventListener('click', () => {
+                const checkedBoxes = document.querySelectorAll('.allergy-checkbox:checked');
+                selectedAllergyCodes = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+
+                saveAllergiesToStorage();
+                updateAllergyBanner();
+                renderCalendar();
+                hideModal(document.getElementById('allergyModal'));
+
+                // Safety notification check
+                let hasAnyAllergyInMonth = false;
+                Object.values(mealsData).forEach(day => {
+                    if (day.dishes) {
+                        day.dishes.forEach(d => {
+                            if (d.allergies && d.allergies.some(a => selectedAllergyCodes.includes(a))) {
+                                hasAnyAllergyInMonth = true;
+                            }
+                        });
+                    }
+                });
+
+                if (selectedAllergyCodes.length > 0 && !hasAnyAllergyInMonth) {
+                    showToast("이번 달 식단은 설정한 알레르기 위험 없이 안전합니다! 🎉");
+                } else if (selectedAllergyCodes.length > 0) {
+                    showToast("알레르기 주의 사항이 식단표에 적용되었습니다.", true);
+                } else {
+                    showToast("알레르기 설정이 해제되었습니다.");
+                }
+            });
+
+            // Calendar Navigation
+            document.getElementById('prevMonthBtn').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+            });
+
+            document.getElementById('nextMonthBtn').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+            });
+
+            document.getElementById('todayBtn').addEventListener('click', () => {
+                currentDate = new Date(2026, 8, 1);
+                renderCalendar();
+            });
+
+            // Admin Mode Toggle
+            document.getElementById('toggleAdminBtn').addEventListener('click', () => {
+                if (activeAdminMode) {
+                    activeAdminMode = false;
+                    document.getElementById('adminBtnText').textContent = '관리자 모드';
+                    document.getElementById('adminBtnIcon').setAttribute('data-lucide', 'lock');
+                    document.getElementById('adminNoticeBar').classList.add('hidden');
+                    showToast("관리자 모드가 해제되었습니다.");
+                    renderCalendar();
+                } else {
+                    document.getElementById('adminPinInput').value = '';
+                    document.getElementById('pinAuthError').classList.add('hidden');
+                    showModal(document.getElementById('adminPinModal'));
+                }
+            });
+
+            document.querySelectorAll('.closePinModalBtn').forEach(btn => {
+                btn.addEventListener('click', () => hideModal(document.getElementById('adminPinModal')));
+            });
+
+            document.getElementById('submitPinAuthBtn').addEventListener('click', () => {
+                const inputPin = document.getElementById('adminPinInput').value.trim();
+                if (inputPin === adminPin) {
+                    activeAdminMode = true;
+                    hideModal(document.getElementById('adminPinModal'));
+                    document.getElementById('adminBtnText').textContent = '관리자 종료';
+                    document.getElementById('adminBtnIcon').setAttribute('data-lucide', 'unlock');
+                    document.getElementById('adminNoticeBar').classList.remove('hidden');
+                    showToast("관리자 인증 성공! 식단 수정 및 AI 파서 권한이 활성화되었습니다.");
+                    renderCalendar();
+                } else {
+                    document.getElementById('pinAuthError').classList.remove('hidden');
+                }
+            });
+
+            // Change PIN Modal
+            document.getElementById('openChangePinBtn').addEventListener('click', () => {
+                document.getElementById('curPinInput').value = '';
+                document.getElementById('newPinInput').value = '';
+                document.getElementById('confirmPinInput').value = '';
+                document.getElementById('changePinError').classList.add('hidden');
+                showModal(document.getElementById('changePinModal'));
+            });
+
+            document.querySelectorAll('.closeChangePinModalBtn').forEach(btn => {
+                btn.addEventListener('click', () => hideModal(document.getElementById('changePinModal')));
+            });
+
+            document.getElementById('saveNewPinBtn').addEventListener('click', () => {
+                const cur = document.getElementById('curPinInput').value.trim();
+                const newP = document.getElementById('newPinInput').value.trim();
+                const cfP = document.getElementById('confirmPinInput').value.trim();
+                const errEl = document.getElementById('changePinError');
+
+                if (cur !== adminPin) {
+                    errEl.textContent = "현재 비밀번호가 일치하지 않습니다.";
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+                if (newP.length !== 4 || isNaN(newP)) {
+                    errEl.textContent = "새 비밀번호는 4자리 숫자여야 합니다.";
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+                if (newP !== cfP) {
+                    errEl.textContent = "새 비밀번호가 일치하지 않습니다.";
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+
+                savePinToStorage(newP);
+                hideModal(document.getElementById('changePinModal'));
+                showToast("비밀번호가 성공적으로 변경되었습니다.");
+            });
+
+            // AI Import Modal Wiring
+            document.getElementById('openAiImportBtn').addEventListener('click', () => {
+                showModal(document.getElementById('aiImportModal'));
+            });
+
+            document.querySelectorAll('.closeAiModalBtn').forEach(btn => {
+                btn.addEventListener('click', () => hideModal(document.getElementById('aiImportModal')));
+            });
+
+            // AI Tab switching
+            const aiTabImageBtn = document.getElementById('aiTabImageBtn');
+            const aiTabTextBtn = document.getElementById('aiTabTextBtn');
+            const aiImageTabSection = document.getElementById('aiImageTabSection');
+            const aiTextTabSection = document.getElementById('aiTextTabSection');
+
+            aiTabImageBtn.addEventListener('click', () => {
+                activeAiTab = 'image';
+                aiTabImageBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white text-purple-700 shadow-xs flex items-center justify-center gap-1.5";
+                aiTabTextBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
+                aiImageTabSection.classList.remove('hidden');
+                aiTextTabSection.classList.add('hidden');
+            });
+
+            aiTabTextBtn.addEventListener('click', () => {
+                activeAiTab = 'text';
+                aiTabTextBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white text-purple-700 shadow-xs flex items-center justify-center gap-1.5";
+                aiTabImageBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
+                aiTextTabSection.classList.remove('hidden');
+                aiImageTabSection.classList.add('hidden');
+            });
+
+            // Image Dropzone Handling
+            const dropzone = document.getElementById('imageDropzone');
+            const imageInput = document.getElementById('aiImageInput');
+            const emptyState = document.getElementById('dropzoneEmptyState');
+            const previewState = document.getElementById('dropzonePreviewState');
+            const imgPreview = document.getElementById('uploadedImagePreview');
+            const fileNameText = document.getElementById('uploadedFileName');
+            const removeImgBtn = document.getElementById('removeUploadedImgBtn');
+
+            dropzone.addEventListener('click', () => imageInput.click());
+
+            imageInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    handleSelectedImageFile(e.target.files[0]);
+                }
+            });
+
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('border-purple-500', 'bg-purple-100/50');
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('border-purple-500', 'bg-purple-100/50');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('border-purple-500', 'bg-purple-100/50');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleSelectedImageFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            function handleSelectedImageFile(file) {
+                currentUploadedImageFile = file;
+                fileNameText.textContent = file.name;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imgPreview.src = e.target.result;
+                    emptyState.classList.add('hidden');
+                    previewState.classList.remove('hidden');
+                    previewState.classList.add('flex');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            removeImgBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentUploadedImageFile = null;
+                imageInput.value = '';
+                previewState.classList.add('hidden');
+                previewState.classList.remove('flex');
+                emptyState.classList.remove('hidden');
+            });
+
+            // Preset October Sample Text
+            document.getElementById('loadPresetOctoberTextBtn').addEventListener('click', () => {
+                const sampleOct = `10/1 [1학년만]
+현미찹쌀밥
+소고기무국(5.6.16)
+제육볶음(5.6.10.13)
+배추김치(9)
+650.5/30.2/180.0/3.2
+
+10/2 [동아리]
+자장밥(1.5.6.10)
+계란파국(1)
+꿔바로우(1.5.6.10)
+깍두기(9)
+720.0/28.0/150.0/2.8`;
+                document.getElementById('aiRawTextInput').value = sampleOct;
+            });
+
+            // Run AI Parser Button
+            document.getElementById('runAiParserBtn').addEventListener('click', () => {
+                const targetYear = document.getElementById('aiTargetYear').value;
+                const targetMonth = document.getElementById('aiTargetMonth').value;
+
+                if (activeAiTab === 'image') {
+                    if (!currentUploadedImageFile) {
+                        showToast("식단표 이미지 또는 사진을 업로드해주세요.", true);
+                        return;
+                    }
+
+                    const scanStatus = document.getElementById('ocrScanningStatus');
+                    const progressBar = document.getElementById('ocrProgressBar');
+                    const percentText = document.getElementById('ocrPercentText');
+
+                    scanStatus.classList.remove('hidden');
+                    let progress = 0;
+
+                    const interval = setInterval(() => {
+                        progress += 15;
+                        if (progress > 100) progress = 100;
+                        progressBar.style.width = `${progress}%`;
+                        percentText.textContent = `${progress}%`;
+
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            setTimeout(() => {
+                                scanStatus.classList.add('hidden');
+
+                                const ocrSimulatedText = `10/1 [1, 3학년만]
+현미찹쌀밥
+소고기무국(5.6.16)
+제육볶음(5.6.10.13)
+배추김치(9)
+650.5/30.2/180.0/3.2
+
+10/2 [체육대회]
+자장밥(1.5.6.10)
+계란파국(1)
+꿔바로우(1.5.6.10)
+깍두기(9)
+720.0/28.0/150.0/2.8`;
+
+                                const count = parseAndApplyAiMealText(ocrSimulatedText, targetYear, targetMonth);
+                                hideModal(document.getElementById('aiImportModal'));
+                                currentDate = new Date(parseInt(targetYear), parseInt(targetMonth) - 1, 1);
+                                renderCalendar();
+                                showToast(`AI 시각 OCR 분석 완료! ${count}일치 식단표가 자동 반영되었습니다.`);
+                            }, 300);
+                        }
+                    }, 120);
+
+                } else {
+                    const rawText = document.getElementById('aiRawTextInput').value;
+                    if (!rawText.trim()) {
+                        showToast("분석할 식단표 텍스트를 입력해주세요.", true);
+                        return;
+                    }
+
+                    const count = parseAndApplyAiMealText(rawText, targetYear, targetMonth);
+                    hideModal(document.getElementById('aiImportModal'));
+                    currentDate = new Date(parseInt(targetYear), parseInt(targetMonth) - 1, 1);
+                    renderCalendar();
+                    showToast(`AI 파싱 완료! ${count}일치 식단이 성공적으로 자동 반영되었습니다.`);
+                }
+            });
+
+            // Manual Admin Edit Modal Trigger from Detail Modal
+            document.getElementById('modalAdminEditTrigger').addEventListener('click', () => {
+                hideModal(document.getElementById('mealDetailModal'));
+                openAdminEditModal(selectedDateKeyForEdit);
+            });
+
+            // Admin Manual Edit Logic
+            document.querySelectorAll('.closeAdminModalBtn').forEach(btn => {
+                btn.addEventListener('click', () => hideModal(document.getElementById('adminEditModal')));
+            });
+
+            document.getElementById('addDishRowBtn').addEventListener('click', () => {
+                addAdminDishRow('', []);
+            });
+
+            document.getElementById('saveAdminMealBtn').addEventListener('click', () => {
+                if (!selectedDateKeyForEdit) return;
+
+                const targetTagVal = document.getElementById('editTargetTag').value.trim();
+                const dishRows = document.querySelectorAll('.admin-dish-row');
+                const dishes = [];
+
+                dishRows.forEach(row => {
+                    const name = row.querySelector('.dish-name-input').value.trim();
+                    const allergyString = row.querySelector('.dish-allergy-input').value.trim();
+                    let allergies = [];
+                    if (allergyString) {
+                        allergies = allergyString.split('.').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+                    }
+                    if (name) {
+                        dishes.push({ name, allergies });
+                    }
+                });
+
+                mealsData[selectedDateKeyForEdit] = {
+                    targetTag: targetTagVal || null,
+                    dishes: dishes,
+                    calories: parseFloat(document.getElementById('editCalories').value) || 0,
+                    protein: parseFloat(document.getElementById('editProtein').value) || 0,
+                    calcium: parseFloat(document.getElementById('editCalcium').value) || 0,
+                    iron: parseFloat(document.getElementById('editIron').value) || 0
+                };
+
+                saveMealsToStorage();
+                hideModal(document.getElementById('adminEditModal'));
+                renderCalendar();
+                showToast("해당 날짜의 식단 및 영양 정보가 수정되었습니다.");
+            });
+        }
+
+        function openAdminEditModal(dateKey) {
+            document.getElementById('adminEditDateText').textContent = `${dateKey} 수정 중`;
+            const dayData = mealsData[dateKey] || { dishes: [], calories: 0, protein: 0, calcium: 0, iron: 0, targetTag: '' };
+
+            document.getElementById('editTargetTag').value = dayData.targetTag || '';
+            document.getElementById('editCalories').value = dayData.calories || 0;
+            document.getElementById('editProtein').value = dayData.protein || 0;
+            document.getElementById('editCalcium').value = dayData.calcium || 0;
+            document.getElementById('editIron').value = dayData.iron || 0;
+
+            const container = document.getElementById('adminDishesContainer');
+            container.innerHTML = '';
+
+            if (dayData.dishes && dayData.dishes.length > 0) {
+                dayData.dishes.forEach(d => addAdminDishRow(d.name, d.allergies));
+            } else {
+                addAdminDishRow('', []);
+            }
+
+            showModal(document.getElementById('adminEditModal'));
+        }
+
+        function addAdminDishRow(name = '', allergies = []) {
+            const container = document.getElementById('adminDishesContainer');
+            const row = document.createElement('div');
+            row.className = "admin-dish-row flex items-center gap-2";
+            row.innerHTML = `
+                <input type="text" placeholder="음식명" value="${name}" class="dish-name-input flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-mint-500 focus:outline-none">
+                <input type="text" placeholder="알레르기 (예: 5.6.16)" value="${allergies ? allergies.join('.') : ''}" class="dish-allergy-input w-28 px-2.5 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-mint-500 focus:outline-none">
+                <button type="button" class="remove-dish-btn p-2 text-slate-400 hover:text-red-500 rounded-lg">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            `;
+            row.querySelector('.remove-dish-btn').addEventListener('click', () => row.remove());
+            container.appendChild(row);
+            initLucideIcons();
+        }
+    </script>
+</body>
+</html>
